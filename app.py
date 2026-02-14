@@ -25,37 +25,50 @@ from sklearn.metrics import (
     classification_report
 )
 
-# ===============================
+# =====================================================
 # CONFIG
-# ===============================
+# =====================================================
 
 st.set_page_config(page_title="Bank Marketing ML App", layout="wide")
 
 st.title("📊 Bank Marketing Classification Application")
 st.markdown("### Hari Prasad K C - 2025AB05108 - BITS ML Assignment 2")
 
-# ===============================
-# DATASET DOWNLOAD FROM GITHUB
-# ===============================
+# =====================================================
+# DATASET SOURCE
+# =====================================================
 
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/2025ab05108-oss/project-folder/main/bank.csv"
 
+st.sidebar.header("📂 Dataset Source")
+
+uploaded_file = st.sidebar.file_uploader(
+    "Upload CSV Dataset",
+    type=["csv"]
+)
+
 @st.cache_data
-def load_data_from_github():
+def load_github_data():
     try:
         response = requests.get(GITHUB_RAW_URL)
         response.raise_for_status()
         data = StringIO(response.text)
         return pd.read_csv(data, sep=";")
-    except Exception as e:
-        st.error("❌ Failed to download dataset from GitHub.")
+    except Exception:
+        st.error("❌ Unable to download dataset from GitHub.")
         st.stop()
 
-df = load_data_from_github()
+# Load dataset
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file, sep=";")
+    st.sidebar.success("Using uploaded dataset.")
+else:
+    df = load_github_data()
+    st.sidebar.info("Using dataset from GitHub repository.")
 
-# ===============================
+# =====================================================
 # DATASET OVERVIEW
-# ===============================
+# =====================================================
 
 st.header("📌 Dataset Overview")
 
@@ -76,18 +89,19 @@ st.dataframe(feature_df, use_container_width=True)
 st.subheader("🔎 Sample Records (First 5 Rows)")
 st.dataframe(df.head(), use_container_width=True)
 
-# ===============================
+# =====================================================
 # PREPROCESSING
-# ===============================
+# =====================================================
 
 df_processed = df.copy()
 
+# Encode categorical variables
 for col in df_processed.select_dtypes(include="object").columns:
     le = LabelEncoder()
     df_processed[col] = le.fit_transform(df_processed[col])
 
 if "y" not in df_processed.columns:
-    st.error("Target column 'y' not found in dataset.")
+    st.error("❌ Target column 'y' not found.")
     st.stop()
 
 X = df_processed.drop("y", axis=1)
@@ -97,9 +111,9 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
-# ===============================
+# =====================================================
 # MODEL SELECTION
-# ===============================
+# =====================================================
 
 st.sidebar.header("🤖 Select Classification Model")
 
@@ -115,15 +129,15 @@ model_option = st.sidebar.selectbox(
     ]
 )
 
-# ===============================
+# =====================================================
 # MODEL EVALUATION
-# ===============================
+# =====================================================
 
 st.header("🤖 Model Evaluation")
 
 if st.button("Run Model"):
 
-    # Scaling only where needed
+    # Scaling for specific models
     if model_option in ["Logistic Regression", "KNN"]:
         scaler = StandardScaler()
         X_train_scaled = scaler.fit_transform(X_train)
@@ -132,31 +146,29 @@ if st.button("Run Model"):
         X_train_scaled = X_train
         X_test_scaled = X_test
 
+    # Model selection
     if model_option == "Logistic Regression":
         model = LogisticRegression(max_iter=1000)
-        model.fit(X_train_scaled, y_train)
 
     elif model_option == "Decision Tree":
         model = DecisionTreeClassifier(random_state=42)
-        model.fit(X_train_scaled, y_train)
 
     elif model_option == "KNN":
         model = KNeighborsClassifier(n_neighbors=5)
-        model.fit(X_train_scaled, y_train)
 
     elif model_option == "Naive Bayes":
         model = GaussianNB()
-        model.fit(X_train_scaled, y_train)
 
     elif model_option == "Random Forest":
         model = RandomForestClassifier(n_estimators=100, random_state=42)
-        model.fit(X_train_scaled, y_train)
 
     elif model_option == "XGBoost (Ensemble)":
         model = XGBClassifier(use_label_encoder=False, eval_metric="logloss")
-        model.fit(X_train_scaled, y_train)
 
-    # Predictions
+    # Train model
+    model.fit(X_train_scaled, y_train)
+
+    # Predict
     y_pred = model.predict(X_test_scaled)
 
     if hasattr(model, "predict_proba"):
@@ -171,9 +183,9 @@ if st.button("Run Model"):
     f1 = f1_score(y_test, y_pred)
     mcc = matthews_corrcoef(y_test, y_pred)
 
-    # ===============================
-    # METRICS DISPLAY
-    # ===============================
+    # =====================================================
+    # DISPLAY METRICS
+    # =====================================================
 
     st.subheader("📈 Evaluation Metrics")
 
@@ -187,7 +199,10 @@ if st.button("Run Model"):
     col5.metric("F1 Score", round(f1, 4))
     col6.metric("MCC", round(mcc, 4))
 
-    # Confusion Matrix
+    # =====================================================
+    # CONFUSION MATRIX
+    # =====================================================
+
     st.subheader("🔲 Confusion Matrix")
 
     cm = confusion_matrix(y_test, y_pred)
@@ -198,6 +213,9 @@ if st.button("Run Model"):
     plt.ylabel("Actual")
     st.pyplot(fig)
 
-    # Classification Report
+    # =====================================================
+    # CLASSIFICATION REPORT
+    # =====================================================
+
     st.subheader("📋 Classification Report")
     st.text(classification_report(y_test, y_pred))
