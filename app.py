@@ -33,16 +33,30 @@ st.title("📊 Bank Marketing Classification Application")
 st.markdown("### Machine Learning Models - BITS ML Assignment 2")
 
 # ===============================
-# DOWNLOAD DATASET FROM GITHUB
+# SIDEBAR - FILE UPLOAD
 # ===============================
 
+st.sidebar.header("📂 Upload Dataset")
+
+uploaded_file = st.sidebar.file_uploader(
+    "Browse and upload CSV file",
+    type=["csv"]
+)
+
+# Default GitHub dataset (fallback)
 GITHUB_DATA_URL = "https://raw.githubusercontent.com/2025ab05108-oss/project-folder/main/bank.csv"
 
 @st.cache_data
-def load_data():
+def load_default_data():
     return pd.read_csv(GITHUB_DATA_URL, sep=";")
 
-df = load_data()
+# Load dataset
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file, sep=";")
+    st.sidebar.success("Custom dataset uploaded successfully!")
+else:
+    df = load_default_data()
+    st.sidebar.info("Using default dataset from GitHub.")
 
 # ===============================
 # DATASET OVERVIEW
@@ -78,7 +92,7 @@ for col in df_processed.select_dtypes(include="object").columns:
     df_processed[col] = le.fit_transform(df_processed[col])
 
 if "y" not in df_processed.columns:
-    st.error("Target column 'y' not found.")
+    st.error("Target column 'y' not found in dataset.")
     st.stop()
 
 X = df_processed.drop("y", axis=1)
@@ -92,7 +106,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 # MODEL SELECTION
 # ===============================
 
-st.sidebar.header("Select Classification Model")
+st.sidebar.header("🤖 Select Classification Model")
 
 model_option = st.sidebar.selectbox(
     "Choose Model",
@@ -114,7 +128,7 @@ st.header("🤖 Model Evaluation")
 
 if st.button("Run Model"):
 
-    # Scaling only where required
+    # Scaling only where needed
     if model_option in ["Logistic Regression", "KNN"]:
         scaler = StandardScaler()
         X_train_scaled = scaler.fit_transform(X_train)
@@ -123,6 +137,7 @@ if st.button("Run Model"):
         X_train_scaled = X_train
         X_test_scaled = X_test
 
+    # Model Selection
     if model_option == "Logistic Regression":
         model = LogisticRegression(max_iter=1000)
         model.fit(X_train_scaled, y_train)
@@ -163,7 +178,7 @@ if st.button("Run Model"):
     mcc = matthews_corrcoef(y_test, y_pred)
 
     # ===============================
-    # DISPLAY METRICS
+    # METRICS DISPLAY
     # ===============================
 
     st.subheader("📈 Evaluation Metrics")
