@@ -30,7 +30,7 @@ from sklearn.metrics import (
 st.set_page_config(page_title="Bank Marketing ML App", layout="wide")
 
 st.title("📊 Bank Marketing Classification Application")
-st.markdown("### Machine Learning Models - BITS ML Assignment 2")
+st.markdown("### Hari Prasad K C - 2025AB05108 - BITS ML Assignment 2")
 
 # ===============================
 # SIDEBAR - FILE UPLOAD
