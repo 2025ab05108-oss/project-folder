@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import requests
+from io import StringIO
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
@@ -33,30 +35,23 @@ st.title("📊 Bank Marketing Classification Application")
 st.markdown("### Hari Prasad K C - 2025AB05108 - BITS ML Assignment 2")
 
 # ===============================
-# SIDEBAR - FILE UPLOAD
+# DATASET DOWNLOAD FROM GITHUB
 # ===============================
 
-st.sidebar.header("📂 Upload Dataset")
-
-uploaded_file = st.sidebar.file_uploader(
-    "Browse and upload CSV file",
-    type=["csv"]
-)
-
-# Default GitHub dataset (fallback)
-GITHUB_DATA_URL = "https://raw.githubusercontent.com/2025ab05108-oss/project-folder/main/bank.csv"
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/2025ab05108-oss/project-folder/main/bank.csv"
 
 @st.cache_data
-def load_default_data():
-    return pd.read_csv(GITHUB_DATA_URL, sep=";")
+def load_data_from_github():
+    try:
+        response = requests.get(GITHUB_RAW_URL)
+        response.raise_for_status()
+        data = StringIO(response.text)
+        return pd.read_csv(data, sep=";")
+    except Exception as e:
+        st.error("❌ Failed to download dataset from GitHub.")
+        st.stop()
 
-# Load dataset
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file, sep=";")
-    st.sidebar.success("Custom dataset uploaded successfully!")
-else:
-    df = load_default_data()
-    st.sidebar.info("Using default dataset from GitHub.")
+df = load_data_from_github()
 
 # ===============================
 # DATASET OVERVIEW
@@ -137,7 +132,6 @@ if st.button("Run Model"):
         X_train_scaled = X_train
         X_test_scaled = X_test
 
-    # Model Selection
     if model_option == "Logistic Regression":
         model = LogisticRegression(max_iter=1000)
         model.fit(X_train_scaled, y_train)
