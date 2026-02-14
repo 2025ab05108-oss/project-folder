@@ -10,6 +10,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 
 from sklearn.metrics import (
     accuracy_score,
@@ -22,43 +23,29 @@ from sklearn.metrics import (
     classification_report
 )
 
-# Import XGBoost from model folder
-from model.xgboost_model import train_xgboost
-
-
 # ===============================
-# Page Config
+# CONFIG
 # ===============================
 
 st.set_page_config(page_title="Bank Marketing ML App", layout="wide")
 
 st.title("📊 Bank Marketing Classification Application")
-st.markdown("### Hari Prasad K C - 2025AB05108 - BITS ML Assignment 2")
-
+st.markdown("### Machine Learning Models - BITS ML Assignment 2")
 
 # ===============================
-# Load Dataset
+# DOWNLOAD DATASET FROM GITHUB
 # ===============================
+
+GITHUB_DATA_URL = "https://raw.githubusercontent.com/2025ab05108-oss/project-folder/main/bank.csv"
 
 @st.cache_data
 def load_data():
-    return pd.read_csv("bank.csv", sep=";")
+    return pd.read_csv(GITHUB_DATA_URL, sep=";")
 
 df = load_data()
 
 # ===============================
-# Sidebar Upload Option
-# ===============================
-
-st.sidebar.header("Upload Test Dataset (CSV)")
-uploaded_file = st.sidebar.file_uploader("Upload CSV File", type=["csv"])
-
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file, sep=";")
-    st.sidebar.success("Dataset uploaded successfully!")
-
-# ===============================
-# Dataset Overview
+# DATASET OVERVIEW
 # ===============================
 
 st.header("📌 Dataset Overview")
@@ -81,7 +68,7 @@ st.subheader("🔎 Sample Records (First 5 Rows)")
 st.dataframe(df.head(), use_container_width=True)
 
 # ===============================
-# Preprocessing
+# PREPROCESSING
 # ===============================
 
 df_processed = df.copy()
@@ -102,7 +89,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # ===============================
-# Model Selection
+# MODEL SELECTION
 # ===============================
 
 st.sidebar.header("Select Classification Model")
@@ -120,14 +107,14 @@ model_option = st.sidebar.selectbox(
 )
 
 # ===============================
-# Model Evaluation
+# MODEL EVALUATION
 # ===============================
 
 st.header("🤖 Model Evaluation")
 
 if st.button("Run Model"):
 
-    # Scaling only for LR and KNN
+    # Scaling only where required
     if model_option in ["Logistic Regression", "KNN"]:
         scaler = StandardScaler()
         X_train_scaled = scaler.fit_transform(X_train)
@@ -136,7 +123,6 @@ if st.button("Run Model"):
         X_train_scaled = X_train
         X_test_scaled = X_test
 
-    # Select Model
     if model_option == "Logistic Regression":
         model = LogisticRegression(max_iter=1000)
         model.fit(X_train_scaled, y_train)
@@ -158,7 +144,8 @@ if st.button("Run Model"):
         model.fit(X_train_scaled, y_train)
 
     elif model_option == "XGBoost (Ensemble)":
-        model, X_test_scaled = train_xgboost(X_train_scaled, y_train, X_test_scaled)
+        model = XGBClassifier(use_label_encoder=False, eval_metric="logloss")
+        model.fit(X_train_scaled, y_train)
 
     # Predictions
     y_pred = model.predict(X_test_scaled)
@@ -176,7 +163,7 @@ if st.button("Run Model"):
     mcc = matthews_corrcoef(y_test, y_pred)
 
     # ===============================
-    # Display Metrics
+    # DISPLAY METRICS
     # ===============================
 
     st.subheader("📈 Evaluation Metrics")
