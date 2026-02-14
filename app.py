@@ -35,7 +35,7 @@ st.title("📊 Bank Marketing Classification Application")
 st.markdown("### Hari Prasad K C - 2025AB05108 - BITS ML Assignment 2")
 
 # =====================================================
-# GITHUB DATASET URL (RAW)
+# GITHUB RAW URL
 # =====================================================
 
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/2025ab05108-oss/project-folder/main/bank.csv"
@@ -51,30 +51,34 @@ uploaded_file = st.sidebar.file_uploader(
     type=["csv"]
 )
 
-# Download dataset button
+# ---- REAL DOWNLOAD BUTTON ----
 st.sidebar.markdown("### Or Download Dataset from GitHub")
 
-if st.sidebar.button("Download Dataset"):
-    try:
-        response = requests.get(GITHUB_RAW_URL)
-        response.raise_for_status()
-        st.sidebar.success("Dataset downloaded successfully from GitHub.")
-    except:
-        st.sidebar.error("Failed to download dataset from GitHub.")
+try:
+    response = requests.get(GITHUB_RAW_URL)
+    response.raise_for_status()
+    csv_data = response.content
 
-# Cached GitHub loader
+    st.sidebar.download_button(
+        label="Download Dataset",
+        data=csv_data,
+        file_name="bank.csv",
+        mime="text/csv"
+    )
+
+except:
+    st.sidebar.error("Failed to fetch dataset from GitHub.")
+
+# =====================================================
+# LOAD DATASET
+# =====================================================
+
 @st.cache_data
 def load_github_data():
-    try:
-        response = requests.get(GITHUB_RAW_URL)
-        response.raise_for_status()
-        data = StringIO(response.text)
-        return pd.read_csv(data, sep=";")
-    except:
-        st.error("❌ Unable to load dataset from GitHub.")
-        st.stop()
+    response = requests.get(GITHUB_RAW_URL)
+    response.raise_for_status()
+    return pd.read_csv(StringIO(response.text), sep=";")
 
-# Dataset selection logic
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file, sep=";")
     st.sidebar.success("Using uploaded dataset.")
@@ -152,7 +156,7 @@ st.header("🤖 Model Evaluation")
 
 if st.button("Run Model"):
 
-    # Scaling where needed
+    # Scaling where required
     if model_option in ["Logistic Regression", "KNN"]:
         scaler = StandardScaler()
         X_train_scaled = scaler.fit_transform(X_train)
@@ -180,8 +184,10 @@ if st.button("Run Model"):
     elif model_option == "XGBoost (Ensemble)":
         model = XGBClassifier(use_label_encoder=False, eval_metric="logloss")
 
+    # Train model
     model.fit(X_train_scaled, y_train)
 
+    # Predictions
     y_pred = model.predict(X_test_scaled)
 
     if hasattr(model, "predict_proba"):
@@ -212,7 +218,10 @@ if st.button("Run Model"):
     col5.metric("F1 Score", round(f1, 4))
     col6.metric("MCC", round(mcc, 4))
 
-    # Confusion Matrix
+    # =====================================================
+    # CONFUSION MATRIX
+    # =====================================================
+
     st.subheader("🔲 Confusion Matrix")
 
     cm = confusion_matrix(y_test, y_pred)
@@ -223,6 +232,9 @@ if st.button("Run Model"):
     plt.ylabel("Actual")
     st.pyplot(fig)
 
-    # Classification Report
+    # =====================================================
+    # CLASSIFICATION REPORT
+    # =====================================================
+
     st.subheader("📋 Classification Report")
     st.text(classification_report(y_test, y_pred))
