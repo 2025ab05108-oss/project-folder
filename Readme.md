@@ -166,7 +166,7 @@ Deployment Type: Free Tier
 
 GitHub Repository: https://github.com/2025ab05108-oss/project-folder  
 
-Live Application URL: (Add your Streamlit link here)  
+Live Application URL: https://project-folder-iucedghan984k7bqdrufkx.streamlit.app
 
 ---
 
