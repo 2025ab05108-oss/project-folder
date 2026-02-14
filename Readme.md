@@ -170,12 +170,4 @@ Live Application URL: https://project-folder-iucedghan984k7bqdrufkx.streamlit.ap
 
 ---
 
-## ✅ Final Submission Checklist
 
-- GitHub repository link works  
-- Streamlit app link opens correctly  
-- All six models implemented  
-- Evaluation metrics displayed  
-- README.md included in submitted PDF  
-- Comparison table included  
-- Observations table included  
